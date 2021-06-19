@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdint.h>
+#include "commons/collections/list.h"
 
 /* ENUMS */
 //                      						ESTRUCTURAS                          					COSAS FILESYSTEM            ACCIONES BITACORA                                                           CODIGOS UNICOS: MONGO           	DISCORDIADOR                    GENERALES
@@ -71,16 +72,10 @@ typedef struct {
 
 } t_sigkill;
 
-typedef struct { // Solucion nefasta a no poder retornar varios tipos de struct de una funcion
-
-    t_TCB* tcb;
-    t_PCB* pcb;
-    t_tarea* tarea;
-    t_archivo_tareas* archivo_tareas;
-    t_sigkill* tid_condenado;
-    int codigo_operacion;
-    int cantidad; // Revisar funcs paquetes
-
+typedef struct {
+	t_list* lista;
+	int codigo_operacion;
+	int cantidad;
 } t_estructura;
 
 typedef struct {

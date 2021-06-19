@@ -24,6 +24,7 @@
 //FUnciones de testeo
 void funcion_hilo();
 void iniciar_hilo();
+void testeo();
 
 // Funciones PRINCIPALES
 void leer_consola();

@@ -140,6 +140,7 @@ void atender_clientes(void* param) {
 
 	while(flag) {
 		t_estructura* mensaje_recibido = recepcion_y_deserializacion(parametros->socket);
+		void* recibido = list_remove(mensaje_recibido->lista, 0);
 
 		//sleep(1); //para que no se rompa en casos de bug o tiempos de espera
 
@@ -147,8 +148,9 @@ void atender_clientes(void* param) {
 
 			case ARCHIVO_TAREAS:
 				log_info(logger, "Recibido contenido del archivo\n");
-				printf("\tpid:%i. \n\tlongitud; %i. \n%s\n", mensaje_recibido->archivo_tareas->pid, mensaje_recibido->archivo_tareas->largo_texto, mensaje_recibido->archivo_tareas->texto);
-				gestionar_tareas(mensaje_recibido->archivo_tareas);
+				t_archivo_tareas* archivo_tareas = recibido;
+				printf("\tpid:%i. \n\tlongitud; %i. \n%s\n", archivo_tareas->pid, archivo_tareas->largo_texto, archivo_tareas->texto);
+				gestionar_tareas(archivo_tareas);
 				sleep(1);
 				break;
 
@@ -158,32 +160,35 @@ void atender_clientes(void* param) {
 
 			case PEDIR_TAREA:
 				log_info(logger, "Pedido de tarea recibido\n");
-				log_info(logger, "Tripulante: %i\n", mensaje_recibido->tid_condenado->tid);
+				t_sigkill* tid_condenado = recibido;
+				log_info(logger, "Tripulante: %i\n", tid_condenado->tid);
 				// TODO: GABITO Y JULIA
-				// gestionar_pedido_tarea(mensaje_recibido->tid_condenado->tid, parametros->socket);
+				// gestionar_pedido_tarea(tid_condenado->tid, parametros->socket);
 				break;
 
 			case RECIBIR_PCB:
 				//log_info(logger, "Recibo una pcb\n");
 				//almacenar_pcb(mensaje_recibido); //TODO en un futuro, capaz no podamos recibir el PCB por quedarnos sin memoria
-				free(mensaje_recibido->pcb);
+				free(mensaje_recibido->lista);
 				break;
 
 			case RECIBIR_TCB:
 				log_info(logger, "Recibo una tcb\n");
-				log_info(logger, "Tripulante %i, estado: %c, pos: %i %i, puntero_pcb: %i, sig_ins %i\n", (int) mensaje_recibido->tcb->TID, (char) mensaje_recibido->tcb->estado_tripulante, (int) mensaje_recibido->tcb->coord_x, (int) mensaje_recibido->tcb->coord_y, (int) mensaje_recibido->tcb->puntero_a_pcb, (int) mensaje_recibido->tcb->siguiente_instruccion);
-				list_add(lista_tcb, (void*) mensaje_recibido->tcb);
-				free(mensaje_recibido->tcb);
+				t_TCB* tcb = recibido;
+				log_info(logger, "Tripulante %i, estado: %c, pos: %i %i, puntero_pcb: %i, sig_ins %i\n", (int) tcb->TID, (char) tcb->estado_tripulante, (int) tcb->coord_x, (int) tcb->coord_y, (int) tcb->puntero_a_pcb, (int) tcb->siguiente_instruccion);
+				list_add(lista_tcb, (void*) tcb);
+				free(tcb);
 				//printf("Tripulante 1 pos: %c %c\n", (int) mensaje_recibido->tcb->coord_x, (int) mensaje_recibido->tcb->coord_y);
 				break;
 
 			case T_SIGKILL:
 				log_info(logger, "Expulsar Tripulante.");
+				t_sigkill* tid_condenado2 = recibido;
 				// TODO: GABITO Y JULIA
 				// verifica si existe
 				// si existe mandame un enviar_codigo(EXITO, parametros->socket);
 				// si no existe, mandame un enviar_codigo(FALLO, parametros->socket);
-				log_info(logger, "%i -KILLED", mensaje_recibido->tid_condenado->tid);
+				log_info(logger, "%i -KILLED", tid_condenado2->tid);
 				enviar_codigo(EXITO, parametros->socket);
 				break;
 

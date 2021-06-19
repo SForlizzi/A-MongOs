@@ -4,20 +4,22 @@ void manejo_tripulante(int socket_tripulante) { // TODO: Ver si le agrada al enu
 	while(1) {
 		// Se espera a ver que manda el tripulante
 		t_estructura* mensaje = recepcion_y_deserializacion(socket_tripulante);
+		void* recibido = list_remove(mensaje->lista, 0);
+		t_TCB* tcb = recibido;
 
 		// Si es primera conexion, se crea la bitacora y se asigna a la lista
 		if (mensaje->codigo_operacion == PRIMERA_CONEXION) {
-			crear_estructuras_tripulante(mensaje->tcb, socket_tripulante); // TODO: Ver como se mandan tripulantes
-			log_info(logger_mongo, "Se creo la bitacora del tripulante %s.\n", string_itoa(mensaje->tcb->TID));
+			crear_estructuras_tripulante(tcb, socket_tripulante); // TODO: Ver como se mandan tripulantes
+			log_info(logger_mongo, "Se creo la bitacora del tripulante %s.\n", string_itoa(tcb->TID));
 			//free(mensaje->tcb);
 		}
 		// Si no lo es, puede ser o agregar/quitar recursos o cambiar informacion en la bitacora
 		else {
 			// Codigos mayores a Basura y menores a Sabotaje corresponden a asignaciones de bitacora
 			if (mensaje->codigo_operacion > BASURA && mensaje->codigo_operacion < SABOTAJE) {
-				modificar_bitacora(mensaje->codigo_operacion, mensaje->tcb);
-				log_info(logger_mongo, "Se modifico la bitacora del tripulante %s.\n", string_itoa(mensaje->tcb->TID));
-				free(mensaje->tcb);
+				modificar_bitacora(mensaje->codigo_operacion,tcb);
+				log_info(logger_mongo, "Se modifico la bitacora del tripulante %s.\n", string_itoa(tcb->TID));
+				free(tcb);
 			}
 			// Si es otro codigo, debera ser un cambio (tal vez agregar comprobacion para evitar errores de los que codean el Discordiador)
 			else {
@@ -27,8 +29,8 @@ void manejo_tripulante(int socket_tripulante) { // TODO: Ver si le agrada al enu
 
 		// Ultimo mensaje del tripulante, al morir o algo, sera la desconexion, lo cual borra la bitacora y libera los recursos
 		if (mensaje->codigo_operacion == DESCONEXION) { // Tripulante avisa desconexion para finalizar proceso
-			borrar_bitacora(mensaje->tcb);
-			log_info(logger_mongo, "Se desconecto el tripulante %s.\n", string_itoa(mensaje->tcb->TID));
+			borrar_bitacora(tcb);
+			log_info(logger_mongo, "Se desconecto el tripulante %s.\n", string_itoa(tcb->TID));
 			free(mensaje);
 
 			// Aca finalizaria el hilo creado por el tripulante al conectarse a Mongo

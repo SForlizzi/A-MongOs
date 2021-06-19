@@ -143,7 +143,7 @@ void enviar_codigo(int codigo_operacion, int socket_receptor) {
 // -Liberar el struct estructura luego de extraer las cosas
 // TODO: Mejorable
 
-t_estructura* recepcion_y_deserializacion(int socket_receptor) { 
+t_estructura* recepcion_y_deserializacion(int socket_receptor) {
 
     t_paquete* paquete = malloc(sizeof(t_paquete));
     paquete->buffer = malloc(sizeof(t_buffer));
@@ -170,39 +170,38 @@ t_estructura* recepcion_y_deserializacion(int socket_receptor) {
 
     // Switch estructuras y cosas del fylesystem
     switch (paquete->codigo_operacion) { 
-    	case RECIBIR_PCB:
+    	/*case RECIBIR_PCB:
     		intermediario->codigo_operacion = RECIBIR_PCB;
-    		break;
+    		break;*/
 
         case RECIBIR_TCB:
         	intermediario->codigo_operacion = RECIBIR_TCB;
-        	intermediario->tcb = malloc(sizeof(uint32_t)*5 + sizeof(char));
-            intermediario->tcb = deserializar_tcb(paquete->buffer);
+        	intermediario->lista = list_create();
+        	list_add(intermediario->lista, deserializar_tcb(paquete->buffer));
             break;
 
         case TAREA:
             intermediario->codigo_operacion = TAREA;
-
-            // asignar un malloc? tienes idea de lo loco que se oye eso?
-            intermediario->tarea = deserializar_tarea(paquete->buffer);
+            intermediario->lista = list_create();
+            list_add(intermediario->lista, deserializar_tarea(paquete->buffer));
             break;
 
         case ARCHIVO_TAREAS:
         	intermediario->codigo_operacion = ARCHIVO_TAREAS;
-        	intermediario->archivo_tareas = malloc(paquete->buffer->tamanio_estructura);
-            intermediario->archivo_tareas = deserializar_archivo_tareas(paquete->buffer);
+        	intermediario->lista = list_create();
+        	list_add(intermediario->lista, deserializar_archivo_tareas(paquete->buffer));
             break;
 
         case T_SIGKILL:
         	intermediario->codigo_operacion = T_SIGKILL;
-        	intermediario->tid_condenado = malloc(sizeof(uint32_t));
-            intermediario->tid_condenado = deserializar_tid(paquete->buffer);
+        	intermediario->lista = list_create();
+        	list_add(intermediario->lista, deserializar_tid(paquete->buffer));
             break;
 
         case PEDIR_TAREA:
         	intermediario->codigo_operacion = PEDIR_TAREA;
-        	intermediario->tid_condenado = malloc(sizeof(uint32_t));
-            intermediario->tid_condenado = deserializar_tid(paquete->buffer);
+        	intermediario->lista = list_create();
+        	list_add(intermediario->lista, deserializar_tid(paquete->buffer));
             break;
 
         // Funcionan igual, mismo case en definitiva, queda asi para legibilidad, desserializa in situ porque es ezpz
@@ -211,6 +210,9 @@ t_estructura* recepcion_y_deserializacion(int socket_receptor) {
         case BASURA:
             intermediario->codigo_operacion = paquete->codigo_operacion;
             memcpy(&(intermediario->cantidad), paquete->buffer->estructura, sizeof(int));
+            //TODO no se si esta bien este, por eso dejo el parámetro cantidad en t_estructura
+        	//intermediario->lista = list_create();
+        	//list_add(intermediario->lista, paquete->buffer->estructura);
             break;
     }
 

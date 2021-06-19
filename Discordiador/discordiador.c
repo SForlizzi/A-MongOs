@@ -112,7 +112,8 @@ void leer_consola() {
                     break;
 
                 case LISTAR_TRIPULANTES:
-                    listar_tripulantes();
+                    //listar_tripulantes();
+                	testeo();
                     break;
 
                 case PAUSAR_PLANIFICACION:
@@ -147,6 +148,20 @@ void leer_consola() {
 
     sistema_activo = 0;
 
+}
+
+void testeo() {
+	t_PCB* pcb = crear_pcb("No importa");
+
+	t_TCB tcb;
+	tcb.TID = 1;
+	tcb.coord_x = 1;
+	tcb.coord_y = 2;
+	tcb.estado_tripulante = 'E';
+	tcb.puntero_a_pcb = pcb;
+	tcb.siguiente_instruccion = 1;
+	t_buffer* buffer = serializar_tcb(tcb);
+	empaquetar_y_enviar(buffer, RECIBIR_TCB, socket_a_mi_ram_hq);
 }
 
 void iniciar_patota(char* leido) {
@@ -360,8 +375,11 @@ void enlistar_algun_tripulante(){
 		t_estructura* respuesta = recepcion_y_deserializacion(socket_a_mi_ram_hq);
 
 		if(respuesta->codigo_operacion == TAREA){
+			void* recibido = list_remove(respuesta->lista, 0);
+			t_tarea* tarea = recibido;
 			// TODO RELLENAR LUEGO DE MUDARNOS DE T_TCB A TRIPULANTES
-			// tripulante_a_ready->tarea = respuesta->tarea;
+			// tripulante_a_ready->tarea = tarea;
+
 		}
 		else if (respuesta->codigo_operacion == FALLO){
 			log_info(logger, "No se recibio ninguna tarea.\n Codigo de error: FALLO\n");
