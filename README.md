@@ -1,7 +1,24 @@
 # No matar a rey de fuego
 
 ### Registro de cambios
+21/06/2021
++ Los tripulantes informan a ram sus movimientos y cambios de estado.
++ Grandes avances en discordiador.
++ Se reciben tareas desde RAM.
++ Los tripulantes son capaces de realizar sus tareas.
+
+20/06/2021
++ Iniciado planteamiento de tripulantes.
++ Planteado movimiento en el tablero.
+
+19/06/2021
++ LISTAR_TRIPULANTES completamente funcional.
++ Iniciado trabajo en conjunto con RAM.
+
 18/06/2021
++ Revividas las estructuras t_tripulante y t_patota.
++ Solucionado el problema de no poder eliminar al tripulante tambien del modulo discordiador.
++ LISTAR_TRIPULANTES aceptablemente funcional.
 + Arreglada enlistar_algun_tripulante y eliminada enlistar_este_tripulante.
 + Pedido de tareas resuelto desde la parte de discordiador.
 
@@ -31,6 +48,13 @@
 + Se pudo enviar y recibir TCBs de RAM a DISCORDIADOR bidireccionalmente.
 + Arregladas funciones de serializar y desserializar TCB.
 + Creadas funciones para crear TCB y PCB en ram (a comentar).
+
+13/06/2021
++ Agregada funcion para eliminar punteros dobles en DIscordiador, y arregladas algunas perdidas de bytes, cortesia de Valgrind.
+
+11/06/2021
++ Se pudo enviar y recibir TCBs de RAM a DISCORDIADOR bidireccionalmente (NOTA: TID no se actualiza en RAM).
++ Arregladas funciones de serializar y desserializar TCB.
 
 10/06/2021
 + FInalizados los siguientes TODO:  

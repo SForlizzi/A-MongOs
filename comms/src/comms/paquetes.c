@@ -1,7 +1,6 @@
 /*
 
  Funcionalidad de paquetes, cortesia de Nico
- TODO de SEBA, falta testear serializacion, envio y recepcion de tareas.
 
 */
 
@@ -57,7 +56,7 @@ t_buffer* serializar_tarea(t_tarea tarea) {
 
     buffer->estructura = estructura;
 
-    free(tarea.nombre); // TODO: Habria que ver si el nombre de la tarea hace falta en src
+    //free(tarea.nombre); // TODO testeo: hacer este free en main
 
     return buffer;
 }
@@ -101,8 +100,6 @@ void empaquetar_y_enviar(t_buffer* buffer, int codigo_operacion, int socket_rece
 
     void* mensaje = malloc(tamanio_mensaje);
     int desplazamiento = 0;
-
-    // TODO seba: por que esto no te tiro error antes? solo tiene un argumento paquete = realloc(sizeof(int) + sizeof(uint32_t) + sizeof(buffer->tamanio_estructura));
 
     memcpy(mensaje + desplazamiento, &(paquete->codigo_operacion), sizeof(int));
     desplazamiento += sizeof(int);
@@ -170,14 +167,12 @@ t_estructura* recepcion_y_deserializacion(int socket_receptor) {
 
     // Switch estructuras y cosas del fylesystem
     switch (paquete->codigo_operacion) { 
-    	/*case RECIBIR_PCB:
-    		intermediario->codigo_operacion = RECIBIR_PCB;
-    		break;*/
-
+    	case ACTUALIZAR:
         case RECIBIR_TCB:
         	intermediario->codigo_operacion = RECIBIR_TCB;
         	intermediario->lista = list_create();
         	list_add(intermediario->lista, deserializar_tcb(paquete->buffer));
+
             break;
 
         case TAREA:
@@ -193,26 +188,29 @@ t_estructura* recepcion_y_deserializacion(int socket_receptor) {
             break;
 
         case T_SIGKILL:
-        	intermediario->codigo_operacion = T_SIGKILL;
-        	intermediario->lista = list_create();
-        	list_add(intermediario->lista, deserializar_tid(paquete->buffer));
-            break;
-
         case PEDIR_TAREA:
         	intermediario->codigo_operacion = PEDIR_TAREA;
+        	uint32_t* tid = malloc(sizeof(uint32_t));
+        	memcpy(&tid, paquete->buffer, sizeof(uint32_t));
         	intermediario->lista = list_create();
-        	list_add(intermediario->lista, deserializar_tid(paquete->buffer));
+        	list_add(intermediario->lista, tid);
+        	break;
+
+        case LISTAR_POR_PID: //TODO
+        	intermediario->codigo_operacion = LISTAR_POR_PID;
+        	uint32_t pid = (uint32_t) paquete->buffer->estructura;
+        	intermediario->lista = list_create();
+        	list_add(intermediario->lista, &pid);
             break;
 
         // Funcionan igual, mismo case en definitiva, queda asi para legibilidad, desserializa in situ porque es ezpz
         case OXIGENO:
         case COMIDA:
         case BASURA:
-            intermediario->codigo_operacion = paquete->codigo_operacion;
-            memcpy(&(intermediario->cantidad), paquete->buffer->estructura, sizeof(int));
-            //TODO no se si esta bien este, por eso dejo el parámetro cantidad en t_estructura
-        	//intermediario->lista = list_create();
-        	//list_add(intermediario->lista, paquete->buffer->estructura);
+        	intermediario->codigo_operacion = paquete->codigo_operacion;
+        	int cantidad = (int) paquete->buffer->estructura;
+        	intermediario->lista = list_create();
+        	list_add(intermediario->lista, &cantidad);
             break;
     }
 
@@ -223,7 +221,7 @@ t_estructura* recepcion_y_deserializacion(int socket_receptor) {
 
 // Pasa un struct buffer a un tcb
 // Se explica deserializacion en esta funcion
-t_TCB* deserializar_tcb(t_buffer* buffer) { // TODO: En implementaciones se esta pasando paquete->buffer->estructura, ver si es error
+t_TCB* deserializar_tcb(t_buffer* buffer) {
 
 	t_TCB* tcb = malloc(sizeof(uint32_t)*5 + sizeof(char)); // Se toma tamaño de lo que sabemos que viene
     void* estructura = buffer->estructura; // Se inicializa intermediario 
@@ -307,25 +305,53 @@ t_archivo_tareas* deserializar_archivo_tareas(t_buffer* buffer) {
     return texto_archivo;
 }
 
-t_buffer* serializar_tid(t_sigkill t_kill) {
+t_buffer* serializar_entero(uint32_t numero) {
+    t_buffer* buffer = malloc((sizeof(t_buffer)));
+    buffer->tamanio_estructura = sizeof(int);
 
-    t_buffer* buffer = malloc(sizeof(t_buffer));
-    buffer->tamanio_estructura = sizeof(uint32_t);
+    void* estructura = malloc((buffer->tamanio_estructura));
 
-    void* estructura = malloc(buffer->tamanio_estructura);
-    memcpy(estructura, &t_kill.tid, sizeof(uint32_t));
+    memcpy(estructura, &numero, sizeof(int));
 
     buffer->estructura = estructura;
 
     return buffer;
 }
 
-t_sigkill* deserializar_tid(t_buffer* buffer) {
+t_buffer* serializar_tripulante(t_tripulante tripulante) {
 
-	t_sigkill* trip_kill = malloc(sizeof(t_sigkill));
+    t_buffer* buffer = malloc(sizeof(uint32_t) + sizeof(uint32_t)*3 + sizeof(char));
+    buffer->tamanio_estructura = sizeof(uint32_t)*3 + sizeof(char);
+    void* estructura = malloc(buffer->tamanio_estructura);
+    int desplazamiento = 0;
+
+    memcpy(estructura + desplazamiento, &tripulante.TID, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+    memcpy(estructura + desplazamiento, &tripulante.estado_tripulante, sizeof(char));
+    desplazamiento += sizeof(char);
+    memcpy(estructura + desplazamiento, &tripulante.coord_x, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+    memcpy(estructura + desplazamiento, &tripulante.coord_y, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    buffer->estructura = estructura;
+
+    return buffer;
+}
+
+t_tripulante* deserializar_tripulante(t_buffer* buffer) {
+
+	t_tripulante* un_tripulante = malloc(sizeof(uint32_t)*3 + sizeof(char));
     void* estructura = buffer->estructura;
 
-    memcpy(&(trip_kill->tid), estructura, sizeof(uint32_t));
+    memcpy(&(un_tripulante->TID), estructura, sizeof(uint32_t));
+    estructura += sizeof(uint32_t);
+    memcpy(&(un_tripulante->estado_tripulante), estructura, sizeof(char));
+    estructura += sizeof(char);
+    memcpy(&(un_tripulante->coord_x), estructura, sizeof(uint32_t));
+    estructura += sizeof(uint32_t);
+    memcpy(&(un_tripulante->coord_y), estructura, sizeof(uint32_t));
+    estructura += sizeof(uint32_t);
 
-    return trip_kill;
+    return un_tripulante;
 }

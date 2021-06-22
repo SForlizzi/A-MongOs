@@ -10,10 +10,10 @@
 #include "commons/collections/list.h"
 
 /* ENUMS */
-//                      						ESTRUCTURAS                          					COSAS FILESYSTEM            ACCIONES BITACORA                                                           CODIGOS UNICOS: MONGO           	DISCORDIADOR                    GENERALES
-enum codigo_operacion { RECIBIR_PCB, RECIBIR_TCB, TAREA, ARCHIVO_TAREAS, T_SIGKILL, PEDIR_TAREA,  OXIGENO, COMIDA, BASURA,    MOVIMIENTO, INICIO_TAREA, FIN_TAREA, CORRE_SABOTAJE, RESUELVE_SABOTAJE,     SABOTAJE, PRIMERA_CONEXION,     				MENSAJE, COD_TAREA,     RECEPCION, DESCONEXION, EXITO, FALLO };
+//                      						DISCORDIADOR                          										COSAS FILESYSTEM            		ACCIONES BITACORA                                                     		CODIGOS UNICOS: MONGO           		GENERALES
+enum codigo_operacion { RECIBIR_TCB, TAREA, ARCHIVO_TAREAS, T_SIGKILL, PEDIR_TAREA, LISTAR_POR_PID, ACTUALIZAR, 		OXIGENO, COMIDA, BASURA,    	MOVIMIENTO, INICIO_TAREA, FIN_TAREA, CORRE_SABOTAJE, RESUELVE_SABOTAJE,     	SABOTAJE, PRIMERA_CONEXION,     		RECEPCION, DESCONEXION, EXITO, FALLO};
 
-enum estados { NEW, READY, EXEC, BLOCKED};
+enum estados { NEW, READY, EXEC, BLOCK, EXIT};
 
 /* ESTRUCTURAS */
 
@@ -23,12 +23,6 @@ typedef struct {
     uint32_t direccion_tareas;
 
 } t_PCB;
-
-/*
-typedef struct {
-    t_PCB* pcb;
-} t_patota;
-*/
 
 typedef struct {
 
@@ -41,13 +35,7 @@ typedef struct {
 
 } t_TCB;
 
-/*
-typedef struct { // Puede estar de mas
-    t_TCB* tcb;
-} t_tripulante;
-*/
-
-typedef struct {
+typedef struct t_tarea{
 
     uint32_t largo_nombre;
     char* nombre;
@@ -58,7 +46,7 @@ typedef struct {
 
 } t_tarea;
 
-typedef struct {
+typedef struct t_archivo_tareas{
 
 	uint32_t largo_texto;
     char* texto;
@@ -90,5 +78,23 @@ typedef struct hilo_tripulante{
 	char* puerto_cliente;
 	void (*atender)(char*);
 } hilo_tripulante;
+
+typedef struct {
+
+    uint32_t TID;
+    char estado_tripulante;
+    uint32_t coord_x;
+    uint32_t coord_y;
+    t_tarea tarea;
+    void (*funcion);
+
+} t_tripulante;
+
+typedef struct {
+
+    uint32_t PID;
+    t_list* tareas_patota;
+
+} t_patota;
 
 #endif
