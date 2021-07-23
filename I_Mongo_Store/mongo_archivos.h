@@ -3,6 +3,7 @@
 
 #include "mongo_blocks.h"
 #include <dirent.h>
+#include <errno.h>
 
 /* ESTRUCTURAS PROPIAS */
 

@@ -92,7 +92,8 @@ void inicializar_archivos_preexistentes() {
 
     cargar_bitmap(); // cargando la lista de bloqueados
     limpiar_cuerpos(); // TODO codear
-//     rename("/home/utnso/polus/Files/Bitacoras/Tripulante10001.ims", "/home/utnso/polus/Files/Bitacoras/OldTripulante10001.ims");
+//     rename("/home/utnso/polus/Files/Bitacoras/Tripulante10001.ims", "/home/utnso/polus/Files/Bitacoras/a/OldTripulante10001.ims");
+//     rename("/home/utnso/polus/Files/Bitacoras", "/home/utnso/polus/Files/ASID");
 
 	log_error(logger_mongo, "3 inicializar_archivos_preexistentes");
 }
@@ -139,18 +140,19 @@ void inicializar_archivos_preexistentes() {
 	return;
 }*/
 
-void limpiar_cuerpos(void) {
+/*void limpiar_cuerpos(void) {
 	path_bitacoras = malloc((strlen(path_files)+1) + strlen("/Bitacoras"));
 	sprintf(path_bitacoras, "%s/Bitacoras", path_files);
 	log_info(logger_mongo, "Path bitácoras: %s", path_bitacoras);
 	log_info(logger_mongo, "Limpiando cuerpos");
   DIR *d;
-  struct dirent *dir;
   d = opendir(path_bitacoras);
+  struct dirent *dir = readdir(d);
+
 	log_info(logger_mongo, "pre if");
   if (d) {
 		log_info(logger_mongo, "pre while");
-    while ((dir = readdir(d)) != NULL) {
+    while ( dir != NULL && strcmp(dir->d_name, "." && strcmp(dir->d_name, ".."))) {
     	char* old_name = malloc(strlen(path_bitacoras) + strlen(dir->d_name) + 1);
     	char* new_name = malloc(strlen(path_bitacoras) + strlen(dir->d_name) + 1 + strlen("Old"));
     	strcpy(old_name, path_bitacoras);
@@ -163,11 +165,38 @@ void limpiar_cuerpos(void) {
     	rename(old_name, new_name);
     	log_trace(logger_mongo, "Old name: %s", old_name);
     	log_trace(logger_mongo, "New name: %s", new_name);
+    	dir = readdir(d);
     }
 	log_info(logger_mongo, "post while");
     closedir(d);
   }
 	log_info(logger_mongo, "cuerpos limpios");
+}
+*/
+
+void limpiar_cuerpos() {
+	path_bitacoras = malloc((strlen(path_files)+1) + strlen("/Bitacoras"));
+	sprintf(path_bitacoras, "%s/Bitacoras", path_files);
+	log_info(logger_mongo, "Limpiando cuerpos");
+	log_info(logger_mongo, "Path bitácoras: %s", path_bitacoras);
+	int renombrado = 0;
+
+	for (int i = 0; renombrado == 0; i++) {
+		char* nuevo_directorio = malloc(strlen(path_bitacoras) + 1);
+		strcpy(nuevo_directorio, path_bitacoras);
+		strcat(nuevo_directorio, string_itoa(i));
+		DIR* dir = opendir(nuevo_directorio);
+
+		//Si el directorio no existe
+		if (!dir) {
+			rename(path_bitacoras, nuevo_directorio);
+
+			strncpy(path_bitacoras, path_files, strlen(path_files) + 1);
+			path_bitacoras = strcat(path_bitacoras, "/Bitacoras");
+			mkdir(path_bitacoras, (mode_t) 0777);
+			renombrado = 1;
+		}
+	}
 }
 
 void asignar_nuevo_bloque(char* path, int size_agregado) {
