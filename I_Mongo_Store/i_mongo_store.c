@@ -39,12 +39,6 @@ int main(int argc, char** argv){
 	iniciar_file_system();
 	log_info(logger_mongo, "Se inicio el FileSystem correctamente.");
 
-	// Se crean los mutexs de los distintos archivos que se alteran, bitacoras no necesitan por ser propias a cada tripulante (puede que se requiera un mutex para la lista)
-	pthread_mutex_init(&mutex_oxigeno, NULL);
-	pthread_mutex_init(&mutex_comida, NULL);
-	pthread_mutex_init(&mutex_basura, NULL);
-	// mutex_blocks
-
 	pthread_t hilo_escucha;
 	pthread_create(&hilo_escucha, NULL, (void*) escuchar_mongo, (void*) &args_escuchar);
 	// pthread_detach(hilo_escucha);

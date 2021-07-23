@@ -5,15 +5,18 @@
 t_log* logger_mongo;
 t_config* config_mongo;
 t_list* bitacoras;
+int existe_oxigeno = 0;
+int existe_comida = 0;
+int existe_basura = 0;
 
 void inicializar_archivos() {
-	// Se obtiene el path al archivo oxigeno dentro de la carpeta files
-	path_oxigeno = malloc((strlen(path_files)+1) + strlen("/Oxigeno.ims"));
-	sprintf(path_oxigeno, "%s/Oxigeno.ims", path_files);
-
 	// Se obtiene el path al archivo comida dentro de la carpeta files
 	path_comida = malloc((strlen(path_files)+1) + strlen("/Comida.ims"));
 	sprintf(path_comida, "%s/Comida.ims", path_files);
+
+	// Se obtiene el path al archivo oxigeno dentro de la carpeta files
+	path_oxigeno = malloc((strlen(path_files)+1) + strlen("/Oxigeno.ims"));
+	sprintf(path_oxigeno, "%s/Oxigeno.ims", path_files);
 
 	// Se obtiene el path al archivo basura dentro de la carpeta files
 	path_basura = malloc((strlen(path_files)+1) + strlen("/Basura.ims"));
@@ -32,16 +35,13 @@ void inicializar_archivos() {
 	int filedescriptor_blocks = open(path_blocks, O_RDWR | O_APPEND | O_CREAT, (mode_t) 0777);
 
 	// Trunco los archivos o los creo en modo escritura y lectura
-	// Se guarda to.do en un struct para uso en distintas funciones
-    recurso.oxigeno        = fopen(path_oxigeno, "w+b");
-	recurso.comida         = fopen(path_comida, "w+b");
-	recurso.basura         = fopen(path_basura, "w+b");
+//	 Se guarda to.do en un struct para uso en distintas funciones
 	directorio.superbloque = fopen(path_superbloque, "w+b");
 	directorio.blocks      = fdopen(filedescriptor_blocks, "w+b");
 
-	iniciar_archivo_recurso(path_oxigeno, 0, 0, NULL);
-	iniciar_archivo_recurso(path_comida, 0, 0, NULL);
-	iniciar_archivo_recurso(path_basura, 0, 0, NULL);
+//	iniciar_archivo_recurso(path_oxigeno, 0, 0, NULL);
+//	iniciar_archivo_recurso(path_comida, 0, 0, NULL);
+//	iniciar_archivo_recurso(path_basura, 0, 0, NULL);
 
 	log_trace(logger_mongo, "pre superbloque");
 	iniciar_superbloque(directorio.superbloque);
@@ -71,14 +71,17 @@ void inicializar_archivos_preexistentes() {
 	path_blocks = malloc((strlen(path_directorio)+1) + strlen("/Blocks.ims"));
 	sprintf(path_blocks, "%s/Blocks.ims", path_directorio);
 
+	existe_oxigeno = 1;
+	existe_comida = 1;
+	existe_basura = 1;
+
 	int filedescriptor_blocks = open(path_blocks, O_RDWR | O_APPEND | O_CREAT, (mode_t) 0777);
 
 	// Abro los archivos en modo escritura y lectura (deben existir archivos)
 	// Se guarda to.do en un struct para uso en distintas funciones
-
-	recurso.oxigeno        = fopen(path_oxigeno, "r+b");
-	recurso.comida         = fopen(path_comida, "r+b");
-	recurso.basura         = fopen(path_basura, "r+b");
+	recurso.oxigeno  = fopen(path_oxigeno, "r+b");
+	recurso.comida  = fopen(path_comida, "r+b");
+	recurso.basura  = fopen(path_basura, "r+b");
 	directorio.superbloque = fopen(path_superbloque, "r+b");
 	directorio.blocks      = fdopen(filedescriptor_blocks, "r+b");
 
@@ -89,36 +92,82 @@ void inicializar_archivos_preexistentes() {
 
     cargar_bitmap(); // cargando la lista de bloqueados
     limpiar_cuerpos(); // TODO codear
-    // rename("/home/utnso/polus/Files/Bitacoras/Tripulante10001.ims", "/home/utnso/polus/Files/Bitacoras/OldTripulante10001.ims");
+//     rename("/home/utnso/polus/Files/Bitacoras/Tripulante10001.ims", "/home/utnso/polus/Files/Bitacoras/OldTripulante10001.ims");
 
 	log_error(logger_mongo, "3 inicializar_archivos_preexistentes");
 }
 
-void limpiar_cuerpos() {
-	/*
-	path_bitacoras = malloc((strlen(path_files)+1) + strlen("/Bitacoras"));
-	sprintf(path_bitacoras, "%s/Bitacoras", path_files);
-	char * const * lista_path = {path_bitacoras};
+/*void limpiar_cuerpos() {
+
+//	path_bitacoras = malloc((strlen(path_files)+1) + strlen("/Bitacoras"));
+//	sprintf(path_bitacoras, "%s/Bitacoras", path_files);
+	log_info(logger_mongo, "Limpiando cuerpos");
+	char * const * lista_path = {&path_bitacoras, NULL};
 	FTS *ftsp;
 	FTSENT *p, *chp;
 	int fts_options = FTS_COMFOLLOW | FTS_LOGICAL | FTS_NOCHDIR;
-	int rval = 0;
-	fts_open(lista_path, fts_options, NULL);
+//	int rval = 0;
+	log_trace(logger_mongo, "pre open");
+	ftsp = fts_open(&lista_path[0], fts_options, NULL);
+	log_trace(logger_mongo, "post poen");
 	chp = fts_children(ftsp, 0);
+	log_trace(logger_mongo, "pre if");
 	if (chp == NULL) {
+		log_trace(logger_mongo, "chp == NULL");
 		return;
 	}
+
+	log_trace(logger_mongo, "post if");
 	while ((p = fts_read(ftsp)) != NULL) {
+		log_trace(logger_mongo, "Entra en el while");
+		char* cadena = malloc(strlen(p->fts_name) + "RIP" + 1);
 		switch (p->fts_info) {
 	    	case FTS_F:
-	    		*(p->fts_name) = strcat(*(p->fts_name), "RIP");
+	    		cadena = p->fts_name;
+	    		cadena = strcat(p->fts_name, "RIP");
+	    		log_trace(logger_mongo, "case FTS");
+	    		strcpy(p->fts_name, "BUENOS_DIAS_CHIVOS");
 	    		break;
 	    	default:
 	    		break;
 	    	}
 		}
+	log_trace(logger_mongo, "post while");
 	fts_close(ftsp);
-	return; */
+
+	log_trace(logger_mongo, "Cuerpos limpios");
+	return;
+}*/
+
+void limpiar_cuerpos(void) {
+	path_bitacoras = malloc((strlen(path_files)+1) + strlen("/Bitacoras"));
+	sprintf(path_bitacoras, "%s/Bitacoras", path_files);
+	log_info(logger_mongo, "Path bitácoras: %s", path_bitacoras);
+	log_info(logger_mongo, "Limpiando cuerpos");
+  DIR *d;
+  struct dirent *dir;
+  d = opendir(path_bitacoras);
+	log_info(logger_mongo, "pre if");
+  if (d) {
+		log_info(logger_mongo, "pre while");
+    while ((dir = readdir(d)) != NULL) {
+    	char* old_name = malloc(strlen(path_bitacoras) + strlen(dir->d_name) + 1);
+    	char* new_name = malloc(strlen(path_bitacoras) + strlen(dir->d_name) + 1 + strlen("Old"));
+    	strcpy(old_name, path_bitacoras);
+    	strcat(old_name, "/");
+    	strcat(old_name, dir->d_name);
+    	strcpy(new_name, path_bitacoras);
+    	strcat(new_name, "/");
+    	strcat(new_name, "Old");
+    	strcat(new_name, dir->d_name);
+    	rename(old_name, new_name);
+    	log_trace(logger_mongo, "Old name: %s", old_name);
+    	log_trace(logger_mongo, "New name: %s", new_name);
+    }
+	log_info(logger_mongo, "post while");
+    closedir(d);
+  }
+	log_info(logger_mongo, "cuerpos limpios");
 }
 
 void asignar_nuevo_bloque(char* path, int size_agregado) {
@@ -248,8 +297,45 @@ int quitar_ultimo_bloque_libre(t_list* lista_bloques, int cantidad_deseada, char
 	return cantidad_alcanzada - cantidad_deseada;
 }
 
+int existe_archivo(int codigo_archivo) {
+	log_trace(logger_mongo, "entra al existe_arachivo");
+//	return ftell(conseguir_archivo_recurso(codigo_archivo)) > 0;
+	switch(codigo_archivo) {
+		case OXIGENO:
+			return existe_oxigeno;
+		case COMIDA:
+			return existe_comida;
+		case BASURA:
+			return existe_basura;
+	}
+	return -1;
+}
+
 void alterar(int codigo_archivo, int cantidad) {  
 	log_trace(logger_mongo, "INICIO alterar, codigo = %i cantidad = %i", codigo_archivo, cantidad);
+
+	char* path = conseguir_path_recurso_codigo(codigo_archivo);
+	if (!existe_archivo(codigo_archivo)) {
+		log_error(logger_mongo, "Inicializando archivos recurso");
+		switch(codigo_archivo) {
+			case OXIGENO:
+				existe_oxigeno = 1;
+				recurso.oxigeno = fopen(path_oxigeno, "w+b");
+				log_error(logger_mongo, "Se creo el archivo de oxigeno");
+				break;
+			case COMIDA:
+				existe_comida = 1;
+				recurso.comida  = fopen(path_comida, "w+b");
+				log_error(logger_mongo, "Se creo el archivo de comida");
+				break;
+			case BASURA:
+				existe_basura = 1;
+				recurso.basura  = fopen(path_basura, "w+b");
+				log_error(logger_mongo, "Se creo el archivo de basura");
+				break;
+		}
+		iniciar_archivo_recurso(path, 0, 0, NULL);
+	}
 
 	if (cantidad >= 0){
 		agregar(codigo_archivo, cantidad);
