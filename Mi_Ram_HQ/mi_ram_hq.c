@@ -50,6 +50,7 @@ int main(int argc, char** argv) {
 
 	close(socket_oyente);
 	matar_mapa();
+
 	free(bitmap_disco);
 	free(memoria_principal);
 	fclose(disco);
@@ -80,7 +81,7 @@ void proceso_handler(void* args) {
 	log_debug(logger,"Se inicia el servidor multi-hilo");
 	args_escuchar* p = malloc(sizeof(args_escuchar));
 	p = args;
-	free(args);
+	//free(args); // Descomentar
 	int socket_escucha = p->socket_oyente;
 
 	int addrlen, socket_especifico;
@@ -133,10 +134,10 @@ void atender_clientes(void* param) {
 				if(una_tarea != NULL){
 					t_buffer* buffer_tarea = serializar_tarea(*una_tarea);
 					empaquetar_y_enviar(buffer_tarea, TAREA, parametros->socket);
-					free(una_tarea->nombre);
+					/*free(una_tarea->nombre);
 					free(una_tarea);
 					free(buffer_tarea->estructura);
-					free(buffer_tarea);
+					free(buffer_tarea);*/ // Descomentar
 				}else{
 					// esto puede ser por algun fallo o porque ya no queden tareas
 					enviar_codigo(FALLO, parametros->socket);
@@ -205,7 +206,7 @@ void atender_clientes(void* param) {
 				log_info(logger, "El codigo es %d", mensaje_recibido->codigo_operacion);
 				//free(mensaje_recibido);
 				break;
-		}
+		}/*
 		if(mensaje_recibido->tcb != NULL)
 			free(mensaje_recibido->tcb);
 		if(mensaje_recibido->pcb != NULL)
@@ -220,7 +221,7 @@ void atender_clientes(void* param) {
 			free(mensaje_recibido->posicion);
 		if(mensaje_recibido->tarea != NULL)
 			free(mensaje_recibido->tarea);
-		free(mensaje_recibido);
+		free(mensaje_recibido);*/ // Descomentar
 	}
 
 }

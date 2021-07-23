@@ -106,7 +106,8 @@ void limpiar_cuerpos() {
 	for (int i = 0; renombrado == 0; i++) {
 		char* nuevo_directorio = malloc(strlen(path_bitacoras) + 1);
 		strcpy(nuevo_directorio, path_bitacoras);
-		strcat(nuevo_directorio, string_itoa(i));
+		char* numero = string_itoa(i);
+		strcat(nuevo_directorio, numero);
 		DIR* dir = opendir(nuevo_directorio);
 
 		//Si el directorio no existe
@@ -118,7 +119,12 @@ void limpiar_cuerpos() {
 			mkdir(path_bitacoras, (mode_t) 0777);
 			renombrado = 1;
 		}
+
+		close(dir);
+		free(nuevo_directorio);
+		free(numero);
 	}
+
 }
 
 void asignar_nuevo_bloque(char* path, int size_agregado) {
@@ -129,34 +135,34 @@ void asignar_nuevo_bloque(char* path, int size_agregado) {
 	t_bitarray* bitmap = obtener_bitmap();
 
 	int bit_libre = 0;
-	int* pos_libre = malloc(sizeof(int));
+	int pos_libre;
 
 	//Recorro todas las posiciones del bitarray
 	for (uint32_t i = 0; i < CANTIDAD_BLOQUES; i++){
 		//Entra si el bit del bitmap está en 0
 		if(!bitarray_test_bit(bitmap, i)){
 			bit_libre = 1;
-			*pos_libre = i;
+			pos_libre = i;
 			break;
 		}
 	}
 
 	//Si había un bloque libre
 	if (bit_libre == 1) {
-		log_trace(logger_mongo, "Habemus bloque libre, el bit libre es = %i", *pos_libre);
+		log_trace(logger_mongo, "Habemus bloque libre, el bit libre es = %i", pos_libre);
 		//Marco el bit como ocupado
-		bitarray_set_bit(bitmap, *pos_libre);
+		bitarray_set_bit(bitmap, pos_libre);
 
 		if (es_recurso(path)){
 			log_trace(logger_mongo, "Asignemos un bloque a un recurso");
-			asignar_bloque_recurso(path, pos_libre);
+			asignar_bloque_recurso(path, &pos_libre);
 		}
 		else {
 			log_trace(logger_mongo, "Asignemos un bloque a un tripulante");
-			asignar_bloque_tripulante(path, pos_libre, size_agregado);
+			asignar_bloque_tripulante(path, &pos_libre, size_agregado);
 		}
 
-		list_add(lista_bloques_ocupados, pos_libre);
+		list_add(lista_bloques_ocupados, &pos_libre);
 		actualizar_bitmap(lista_bloques_ocupados);
 	    log_trace(logger_mongo, "Actualizado");
 	}
@@ -607,6 +613,14 @@ t_list* get_lista_bloques(char* path){
 		if(bloques[0] == NULL){
 			log_error(logger_mongo, "EL path no tiene bloques");
 			config_destroy(config);
+			list_destroy(lista_bloques);
+
+			for(int i = 0; i < contar_palabras(bloques); i++) {
+				free(bloques[i]); // Recontra revisar
+			}
+
+			free(bloques);
+
 			unlockear(path);
 			return lista_bloques;
 		}
@@ -617,8 +631,18 @@ t_list* get_lista_bloques(char* path){
 			aux = malloc(sizeof(int));
 			*aux = atoi(bloques[i]);
 			list_add(lista_bloques, aux);
+			free(aux); // Revisar
 		}
+
 		config_destroy(config);
+		list_destroy(lista_bloques); // Revisar
+
+		for(int i = 0; i < contar_palabras(bloques); i++) {
+			free(bloques[i]); // Recontra revisar
+		}
+
+		free(bloques);
+
 		unlockear(path);
 		log_trace(logger_mongo, "Returneo tripulante");
 		return lista_bloques;
@@ -645,6 +669,14 @@ t_list* get_lista_bloques(char* path){
 
 		log_error(logger_mongo, "EL path no tiene bloques");
 		config_destroy(config);
+		list_destroy(lista_bloques); // Revisar
+
+		for(int i = 0; i < contar_palabras(bloques); i++) {
+			free(bloques[i]); // Recontra revisar
+		}
+
+		free(bloques);
+
 		unlockear(path);
 		return lista_bloques;
 	}
@@ -656,10 +688,19 @@ t_list* get_lista_bloques(char* path){
 		aux = malloc(sizeof(int));
 		*aux = atoi(bloques[i]);
 		list_add(lista_bloques, aux);
+		free(aux); // Revisar
 	}
 
 	log_trace(logger_mongo, "unlockear bloques");
 	config_destroy(config);
+	list_destroy(lista_bloques); // Revisar
+
+	for(int i = 0; i < contar_palabras(bloques); i++) {
+		free(bloques[i]); // Recontra revisar
+	}
+
+	free(bloques);
+
 	unlockear(path);
 
 	return lista_bloques;
@@ -864,7 +905,9 @@ void set_tam(char* path, int tamanio){
 
 	t_config* config = config_create(path);
 	config_save_in_file(config, path);
-	config_set_value(config, "SIZE", string_itoa(tamanio));
+	char* tamanio_char = string_itoa(tamanio);
+	config_set_value(config, "SIZE", tamanio_char);
+	free(tamanio_char);
 	config_save(config);
 	config_destroy(config);
 
@@ -908,7 +951,10 @@ void set_bloq(char* path, t_list* lista){
 
 		for(int i = 0; i < list_size(list_aux); i++){
 			aux = list_get(list_aux, i);
-			cant_numeros += strlen(string_itoa(*aux));
+			char* auxchar = string_itoa(*aux);
+			cant_numeros += strlen(auxchar);
+			free(auxchar);
+			free(aux);
 		}
 
 		lista_bloques = malloc(2 + cant_numeros + comas + 1);
@@ -922,11 +968,15 @@ void set_bloq(char* path, t_list* lista){
 
 		for(int i = 0; i < list_size(list_aux); i++){
 			aux = list_get(list_aux, i);
-			strcat(lista_bloques, string_itoa(*aux));
+			char* auxchar = string_itoa(*aux);
+			strcat(lista_bloques, auxchar);
 
 			if(i+1 < list_size(list_aux)){ // si hay otra repeticion, meto una coma
 				strcat(lista_bloques, ",");
 			}
+
+			free(aux);
+			free(auxchar);
 		}
 		strcat(lista_bloques, "]");
 

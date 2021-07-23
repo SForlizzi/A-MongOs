@@ -111,6 +111,7 @@ void escuchar_mongo(void* args) {
        		pthread_t un_hilo_tripulante;
        		pthread_create(&un_hilo_tripulante, NULL, (void*) manejo_tripulante, (void *) parametros);
        		pthread_detach(un_hilo_tripulante);
+       		free(parametros); // Revisar
        		//Falta cerrar sockets, hacerlo despues de juntar hilos
            	}
        	}
