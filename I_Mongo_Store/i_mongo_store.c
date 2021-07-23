@@ -51,7 +51,7 @@ int main(int argc, char** argv){
 	// Se cierran vestigios del pasado
 	cerrar_archivos();
 	close(socket_oyente);
-	list_destroy(bitacoras);
+	liberar_lista(bitacoras);
 	log_info(logger_mongo, "El I_Mongo_Store finalizo su ejecucion.\n");
 	log_destroy(logger_mongo);
 	config_destroy(config_mongo);
@@ -111,7 +111,6 @@ void escuchar_mongo(void* args) {
        		pthread_t un_hilo_tripulante;
        		pthread_create(&un_hilo_tripulante, NULL, (void*) manejo_tripulante, (void *) parametros);
        		pthread_detach(un_hilo_tripulante);
-       		free(parametros); // Revisar
        		//Falta cerrar sockets, hacerlo despues de juntar hilos
            	}
        	}

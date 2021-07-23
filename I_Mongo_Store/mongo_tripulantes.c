@@ -210,7 +210,7 @@ void modificar_bitacora(t_estructura* mensaje, char** posicion, int socket) {
 	bitacora->tamanio = tamanio; //+ largo_cadenita;
 	set_tam(bitacora->path, tamanio + largo_cadenita);
 
-	list_destroy(lista_bloques); // Revisar
+	liberar_lista(lista_bloques); // Revisar
 }
 
 void escribir_bitacora(t_bitacora* bitacora, char* mensaje) {
@@ -242,12 +242,16 @@ void escribir_bloque_bitacora(char* mensaje, t_bitacora* bitacora) {
 	t_list* lista_bloques = get_lista_bloques(bitacora->path);
 
 	log_debug(logger_mongo, "Pre asignar memoria al aux, escribir_bloque_bitacora");
-	int* aux = NULL; // malloc(sizeof(int)); // Ver si explota sin malloc
+	int* aux = malloc(sizeof(int));
 
 	log_debug(logger_mongo, "Pre-for escribir_bloque_bitacora");
 	for(int i = 0; i < list_size(lista_bloques); i++){
 
+		log_trace(logger_mongo, "Entra for, list size es %i", list_size(lista_bloques));
+
 		aux = list_get(lista_bloques, i);
+
+		log_trace(logger_mongo, "Obtiene lista, aux vale %i", *aux);
 
 		for(int j = 0; j < TAMANIO_BLOQUE; j++){
 
@@ -266,7 +270,6 @@ void escribir_bloque_bitacora(char* mensaje, t_bitacora* bitacora) {
 			}
 		}
 
-		free(aux);
 	}
 
 	if (cantidad_alcanzada != strlen(mensaje)) {
@@ -283,6 +286,8 @@ void escribir_bloque_bitacora(char* mensaje, t_bitacora* bitacora) {
 		escribir_bitacora(bitacora, resto_mensaje);
 		free(resto_mensaje);
 	}
+
+	log_trace(logger_mongo, "Pre free 2");
 
 	free(aux);
 }

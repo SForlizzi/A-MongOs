@@ -134,35 +134,41 @@ void asignar_nuevo_bloque(char* path, int size_agregado) {
 
 	t_bitarray* bitmap = obtener_bitmap();
 
+	log_trace(logger_mongo, "Obtengo bitmap");
+
 	int bit_libre = 0;
-	int pos_libre;
+	int* pos_libre = malloc(sizeof(int));
+
+	log_trace(logger_mongo, "Malloccito");
 
 	//Recorro todas las posiciones del bitarray
 	for (uint32_t i = 0; i < CANTIDAD_BLOQUES; i++){
 		//Entra si el bit del bitmap está en 0
 		if(!bitarray_test_bit(bitmap, i)){
 			bit_libre = 1;
-			pos_libre = i;
+			*pos_libre = i;
 			break;
 		}
 	}
 
+	log_trace(logger_mongo, "Pase for");
+
 	//Si había un bloque libre
 	if (bit_libre == 1) {
-		log_trace(logger_mongo, "Habemus bloque libre, el bit libre es = %i", pos_libre);
+		log_trace(logger_mongo, "Habemus bloque libre, el bit libre es = %i", *pos_libre);
 		//Marco el bit como ocupado
-		bitarray_set_bit(bitmap, pos_libre);
+		bitarray_set_bit(bitmap, *pos_libre);
 
 		if (es_recurso(path)){
 			log_trace(logger_mongo, "Asignemos un bloque a un recurso");
-			asignar_bloque_recurso(path, &pos_libre);
+			asignar_bloque_recurso(path, pos_libre);
 		}
 		else {
 			log_trace(logger_mongo, "Asignemos un bloque a un tripulante");
-			asignar_bloque_tripulante(path, &pos_libre, size_agregado);
+			asignar_bloque_tripulante(path, pos_libre, size_agregado);
 		}
 
-		list_add(lista_bloques_ocupados, &pos_libre);
+		list_add(lista_bloques_ocupados, pos_libre);
 		actualizar_bitmap(lista_bloques_ocupados);
 	    log_trace(logger_mongo, "Actualizado");
 	}
@@ -173,7 +179,6 @@ void asignar_nuevo_bloque(char* path, int size_agregado) {
 	unlockear(path_blocks);
 	log_warning(logger_mongo, "sincronizar fin");
 
-	free(bitmap->bitarray);
 	bitarray_destroy(bitmap);
 
 }
@@ -610,10 +615,10 @@ t_list* get_lista_bloques(char* path){
 
 		char** bloques = config_get_array_value(config, "BLOCKS");
 		t_list* lista_bloques = list_create();
+
 		if(bloques[0] == NULL){
 			log_error(logger_mongo, "EL path no tiene bloques");
 			config_destroy(config);
-			list_destroy(lista_bloques);
 
 			for(int i = 0; i < contar_palabras(bloques); i++) {
 				free(bloques[i]); // Recontra revisar
@@ -630,12 +635,12 @@ t_list* get_lista_bloques(char* path){
 		for(int i = 0; i < contar_palabras(bloques); i++){
 			aux = malloc(sizeof(int));
 			*aux = atoi(bloques[i]);
+			log_trace(logger_mongo, "Aux vale %i", *aux);
 			list_add(lista_bloques, aux);
-			free(aux); // Revisar
+			//free(aux); // Revisar
 		}
 
 		config_destroy(config);
-		list_destroy(lista_bloques); // Revisar
 
 		for(int i = 0; i < contar_palabras(bloques); i++) {
 			free(bloques[i]); // Recontra revisar
@@ -669,13 +674,12 @@ t_list* get_lista_bloques(char* path){
 
 		log_error(logger_mongo, "EL path no tiene bloques");
 		config_destroy(config);
-		list_destroy(lista_bloques); // Revisar
 
-		for(int i = 0; i < contar_palabras(bloques); i++) {
+		/*for(int i = 0; i < contar_palabras(bloques); i++) {
 			free(bloques[i]); // Recontra revisar
 		}
 
-		free(bloques);
+		free(bloques);*/
 
 		unlockear(path);
 		return lista_bloques;
@@ -687,13 +691,13 @@ t_list* get_lista_bloques(char* path){
 	for(int i = 0; i < contar_palabras(bloques); i++){
 		aux = malloc(sizeof(int));
 		*aux = atoi(bloques[i]);
+		log_trace(logger_mongo, "Aux vale %i", *aux);
 		list_add(lista_bloques, aux);
-		free(aux); // Revisar
+		//free(aux); // Revisar
 	}
 
 	log_trace(logger_mongo, "unlockear bloques");
 	config_destroy(config);
-	list_destroy(lista_bloques); // Revisar
 
 	for(int i = 0; i < contar_palabras(bloques); i++) {
 		free(bloques[i]); // Recontra revisar
@@ -793,6 +797,7 @@ void asignar_bloque_tripulante(char* path, int* pos_libre, int size_agregado) {
 	log_info(logger_mongo, "Tamanio pre-agregar: %i", tamanio);
 	log_info(logger_mongo, "Tamanio agregado: %i", size_agregado);
 	log_debug(logger_mongo, "fin asignar_bloque_tripulante");
+	liberar_lista(lista_bloques);
 }
 
 uint32_t bloques_contar(char caracter) {
@@ -934,7 +939,7 @@ void set_bloq(char* path, t_list* lista){
 		list_aux = list_duplicate(nueva);
 	}
 
-	int* aux;
+	int* aux = malloc(sizeof(int));
 	char* lista_bloques;
 
 	if(list_aux == NULL || list_is_empty(list_aux)){
@@ -954,7 +959,6 @@ void set_bloq(char* path, t_list* lista){
 			char* auxchar = string_itoa(*aux);
 			cant_numeros += strlen(auxchar);
 			free(auxchar);
-			free(aux);
 		}
 
 		lista_bloques = malloc(2 + cant_numeros + comas + 1);
@@ -974,14 +978,14 @@ void set_bloq(char* path, t_list* lista){
 			if(i+1 < list_size(list_aux)){ // si hay otra repeticion, meto una coma
 				strcat(lista_bloques, ",");
 			}
-
-			free(aux);
 			free(auxchar);
 		}
 		strcat(lista_bloques, "]");
 
 	}
+	log_debug(logger_mongo, "Pre free 1");
 
+	free(aux);
 	config_set_value(config, "BLOCKS", lista_bloques);
 	// log_debug(logger_mongo, "la lista de bloques queda %s", config_get_string_value(config, "BLOCKS"));
 
