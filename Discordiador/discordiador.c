@@ -149,11 +149,8 @@ int main() {
 
     //iniciar_patota("INICIAR_PATOTA 1 ZJavier.ims");
     //iniciar_patota("INICIAR_PATOTA 3 FS_PatotaA.txt");
-    iniciar_patota("INICIAR_PATOTA 3 ES3_Patota1.txt 9|9 0|0 5|5");
-    iniciar_patota("INICIAR_PATOTA 3 ES3_Patota2.txt 4|0 2|6 8|2");
-    iniciar_patota("INICIAR_PATOTA 3 ES3_Patota3.txt 2|3 5|8 5|3");
-    iniciar_patota("INICIAR_PATOTA 3 ES3_Patota4.txt 0|9 4|4 9|0");
-    iniciar_patota("INICIAR_PATOTA 3 ES3_Patota5.txt 0|2 9|6 3|5");
+    iniciar_patota("INICIAR_PATOTA 1 FS_PatotaA.txt 9|9 0|0 5|5");
+    //iniciar_patota("INICIAR_PATOTA 3 FS_PatotaB.txt 4|0 2|6 8|2");
 
     iniciar_planificacion();
 

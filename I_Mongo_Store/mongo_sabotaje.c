@@ -110,7 +110,7 @@ int verificar_bitmap() {
     else
         return 0;
 
-    list_destroy(bloques_ocupados);
+    liberar_lista(bloques_ocupados);
 }
 
 int verificar_sizes() {

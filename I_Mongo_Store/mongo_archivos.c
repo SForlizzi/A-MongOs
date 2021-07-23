@@ -89,7 +89,11 @@ void inicializar_archivos_preexistentes() {
     msync(mapa, CANTIDAD_BLOQUES * TAMANIO_BLOQUE, MS_ASYNC);
 
     cargar_bitmap(); // cargando la lista de bloqueados
-    limpiar_cuerpos();
+
+    //Descomentar cuando este lista
+    //limpiar_cuerpos();
+
+
     // rename("/home/utnso/polus/Files/Bitacoras/Tripulante10001.ims", "/home/utnso/polus/Files/Bitacoras/OldTripulante10001.ims");
     //rename("/home/utnso/polus/Files/Bitacoras", "/home/utnso/polus/Files/ASID");
 
@@ -179,6 +183,7 @@ void asignar_nuevo_bloque(char* path, int size_agregado) {
 	unlockear(path_blocks);
 	log_warning(logger_mongo, "sincronizar fin");
 
+	free(bitmap->bitarray);
 	bitarray_destroy(bitmap);
 
 }
@@ -631,14 +636,18 @@ t_list* get_lista_bloques(char* path){
 		}
 
 		log_error(logger_mongo, "blocks es %s", config_get_string_value(config, "BLOCKS"));
-		int* aux;
+		int* aux = malloc(sizeof(int));
+
 		for(int i = 0; i < contar_palabras(bloques); i++){
-			aux = malloc(sizeof(int));
+			// aux = malloc(sizeof(int));
 			*aux = atoi(bloques[i]);
 			log_trace(logger_mongo, "Aux vale %i", *aux);
 			list_add(lista_bloques, aux);
 			//free(aux); // Revisar
 		}
+
+		// Por algun motivo esto hace que rompa, no se explica
+		//free(aux);
 
 		config_destroy(config);
 
@@ -685,16 +694,18 @@ t_list* get_lista_bloques(char* path){
 		return lista_bloques;
 	}
 
-	int* aux;
+	int* aux = malloc(sizeof(int));
 	log_trace(logger_mongo, "*get_lista_bloques* la lista de bloques es %s ", config_get_string_value(config, "BLOCKS"));
 
 	for(int i = 0; i < contar_palabras(bloques); i++){
-		aux = malloc(sizeof(int));
+		//aux = malloc(sizeof(int));
 		*aux = atoi(bloques[i]);
 		log_trace(logger_mongo, "Aux vale %i", *aux);
 		list_add(lista_bloques, aux);
 		//free(aux); // Revisar
 	}
+
+	//free(aux);
 
 	log_trace(logger_mongo, "unlockear bloques");
 	config_destroy(config);
@@ -723,6 +734,8 @@ void iniciar_archivo_recurso(char* path, int tamanio, int cant_bloques, t_list* 
 	char* cadena_blocks = config_get_string_value(config, "BLOCKS");
 	char* md5 = md5_archivo(cadena_blocks);
 	set_md5(path, md5);
+	free(md5);
+	free(cadena_blocks);
 	config_destroy(config);
 
 	log_trace(logger_mongo, "FIN iniciar_archivo_recurso");
@@ -737,9 +750,6 @@ void escribir_archivo_tripulante(char* path, uint32_t tamanio, t_list* list_bloq
 
 //	log_trace(logger_mongo, "bloques antes de escribir archivo: %i", (int) list_get(aux, i));
 	set_bloq(path, list_bloques);
-	t_list* aux = get_lista_bloques(path);
-	for(int i = 0; i < list_size(aux); i++)
-	log_trace(logger_mongo, "bloques antes de escribir archivo: %i", (int) list_get(aux, i));
 
 	log_trace(logger_mongo, "FIN escribir_archivo_tripulante");
 }
@@ -985,7 +995,8 @@ void set_bloq(char* path, t_list* lista){
 	}
 	log_debug(logger_mongo, "Pre free 1");
 
-	free(aux);
+	// Ver si al descomentar sigue explotando
+	//free(aux);
 	config_set_value(config, "BLOCKS", lista_bloques);
 	// log_debug(logger_mongo, "la lista de bloques queda %s", config_get_string_value(config, "BLOCKS"));
 
@@ -1009,7 +1020,9 @@ void set_cant_bloques(char* path, int cant){
 
 	t_config* config = config_create(path);
 	config_save_in_file(config, path);
-	config_set_value(config, "BLOCK_COUNT", string_itoa(cant));
+	char* cantidad = string_itoa(cant)
+	config_set_value(config, "BLOCK_COUNT", cantidad);
+	free(cantidad);
 	config_save(config);
 	config_destroy(config);
 
